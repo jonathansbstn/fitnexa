@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../services/sound_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_colors_ext.dart';
 import '../widgets/snack_helper.dart';
@@ -14,8 +16,12 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
+
+  // Animasi fade saat ganti tab
+  late AnimationController _fadeCtrl;
+  late Animation<double> _fadeAnim;
 
   static const _tabs = [
     _TabItem(icon: '🏠', label: 'Home'),
@@ -25,8 +31,30 @@ class _MainScreenState extends State<MainScreen> {
     _TabItem(icon: '👤', label: 'Profil'),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _fadeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+    _fadeCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeCtrl.dispose();
+    super.dispose();
+  }
+
   void navigateToTab(int index) {
+    if (index == _currentIndex) return;
+    HapticFeedback.selectionClick();
+    SoundService.instance.playNavigate();
+    _fadeCtrl.reset();
     setState(() => _currentIndex = index);
+    _fadeCtrl.forward();
   }
 
   @override
@@ -59,66 +87,104 @@ class _MainScreenState extends State<MainScreen> {
             onPressed: () {
               showSnack(context, '🔔 Belum ada notifikasi baru');
             },
-            icon: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: context.appCard,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: context.appDivider),
-              ),
-              child: const Center(
-                child: Text('🔔', style: TextStyle(fontSize: 16)),
-              ),
-            ),
+            icon: _NavActionBtn(emoji: '🔔'),
           ),
           IconButton(
             onPressed: () => navigateToTab(4),
-            icon: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: context.appCard,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: context.appDivider),
-              ),
-              child: const Center(
-                child: Text('⚙️', style: TextStyle(fontSize: 16)),
-              ),
-            ),
+            icon: _NavActionBtn(emoji: '⚙️'),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: IndexedStack(index: _currentIndex, children: screens),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: context.appCard,
-          border: Border(top: BorderSide(color: context.appDivider)),
+
+      // Body dengan FadeTransition saat ganti tab
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: IndexedStack(
+          index: _currentIndex,
+          children: screens,
         ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 64,
-            child: Row(
-              children: List.generate(_tabs.length, (i) {
-                final selected = i == _currentIndex;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _currentIndex = i),
-                    behavior: HitTestBehavior.opaque,
+      ),
+
+      // Bottom Nav Bar dengan sliding indicator
+      bottomNavigationBar: _BottomNav(
+        currentIndex: _currentIndex,
+        tabs: _tabs,
+        onTap: navigateToTab,
+      ),
+    );
+  }
+}
+
+// ── Bottom Nav Bar ────────────────────────────────────────────────────────
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final List<_TabItem> tabs;
+  final ValueChanged<int> onTap;
+  const _BottomNav({
+    required this.currentIndex,
+    required this.tabs,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.appCard,
+        border: Border(top: BorderSide(color: context.appDivider)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: List.generate(tabs.length, (i) {
+              final selected = i == currentIndex;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.primary.withValues(alpha: 0.08)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 6),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          _tabs[i].icon,
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: selected ? null : context.appTextMuted,
+                        // Icon dengan scale animation
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(
+                            begin: selected ? 0.8 : 1.0,
+                            end: selected ? 1.15 : 1.0,
+                          ),
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.elasticOut,
+                          builder: (_, scale, child) => Transform.scale(
+                            scale: scale,
+                            child: child,
+                          ),
+                          child: Text(
+                            tabs[i].icon,
+                            style: const TextStyle(fontSize: 20),
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          _tabs[i].label,
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
                           style: TextStyle(
                             fontSize: 10,
                             color: selected
@@ -126,27 +192,52 @@ class _MainScreenState extends State<MainScreen> {
                                 : context.appTextMuted,
                             fontWeight: selected
                                 ? FontWeight.w800
-                                : FontWeight.w600,
+                                : FontWeight.w500,
                           ),
+                          child: Text(tabs[i].label),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
+                        // Sliding dot indicator
                         AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: selected ? 4 : 0,
-                          height: selected ? 4 : 0,
-                          decoration: const BoxDecoration(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                          width: selected ? 20 : 0,
+                          height: 3,
+                          decoration: BoxDecoration(
                             color: AppColors.primary,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ],
                     ),
                   ),
-                );
-              }),
-            ),
+                ),
+              );
+            }),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Helper widget ─────────────────────────────────────────────────────────
+class _NavActionBtn extends StatelessWidget {
+  final String emoji;
+  const _NavActionBtn({required this.emoji});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: context.appCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: context.appDivider),
+      ),
+      child: Center(
+        child: Text(emoji, style: const TextStyle(fontSize: 16)),
       ),
     );
   }

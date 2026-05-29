@@ -20,6 +20,10 @@ class TabDashboard extends StatelessWidget {
             ? 'Selamat Siang'
             : 'Selamat Malam';
 
+    // Ambil weeklyData dari provider (computed dari logs asli)
+    final weekly = prov.weeklyData;
+    final maxCal = weekly.map((w) => w.calories).fold(0, (a, b) => a > b ? a : b);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
@@ -135,7 +139,6 @@ class TabDashboard extends StatelessWidget {
           // ── Streak + Stats Row ───────────────────────────────────────
           Row(
             children: [
-              // Streak card
               Expanded(
                 child: _StatCard(
                   emoji: '🔥',
@@ -166,17 +169,14 @@ class TabDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // ── Weekly Chart ─────────────────────────────────────────────
+          // ── Weekly Chart (data dari logs asli) ───────────────────────
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(
-                      '📊',
-                      style: TextStyle(fontSize: 18),
-                    ),
+                    const Text('📊', style: TextStyle(fontSize: 18)),
                     const SizedBox(width: 8),
                     Text(
                       'Aktivitas Minggu Ini',
@@ -188,7 +188,8 @@ class TabDashboard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
@@ -205,61 +206,96 @@ class TabDashboard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
-                  height: 80,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: weeklyData.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final d = entry.value;
-                      final maxCal = weeklyData
-                          .map((w) => w.calories)
-                          .reduce((a, b) => a > b ? a : b);
-                      final h = (d.calories / maxCal * 60).toDouble();
-                      final isToday = i == 5;
-                      return Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 600),
-                              curve: Curves.easeOut,
-                              height: h,
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              decoration: BoxDecoration(
-                                gradient: isToday
-                                    ? const LinearGradient(
-                                        colors: [
-                                          AppColors.primary,
-                                          AppColors.warning,
-                                        ],
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                      )
-                                    : null,
-                                color: isToday
-                                    ? null
-                                    : AppColors.primary.withValues(alpha: 0.3),
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(5),
+                // Loading state
+                if (prov.isLoading)
+                  const Center(
+                    child: SizedBox(
+                      height: 80,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SizedBox(
+                    height: 104,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: weekly.asMap().entries.map((entry) {
+                        final i = entry.key;
+                        final d = entry.value;
+                        final h = maxCal > 0
+                            ? (d.calories / maxCal * 56).clamp(4.0, 56.0)
+                            : 4.0;
+                        // Hari ini = index 6 (paling kanan)
+                        final isToday = i == 6;
+                        return Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (d.calories > 0)
+                                Text(
+                                  '${d.calories}',
+                                  style: TextStyle(
+                                    color: isToday
+                                        ? AppColors.primary
+                                        : context.appTextMuted,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeOut,
+                                height: h,
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 3),
+                                decoration: BoxDecoration(
+                                  gradient: isToday
+                                      ? const LinearGradient(
+                                          colors: [
+                                            AppColors.primary,
+                                            AppColors.warning,
+                                          ],
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                        )
+                                      : null,
+                                  color: isToday
+                                      ? null
+                                      : AppColors.primary
+                                          .withValues(alpha: 0.3),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(5),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              d.day,
-                              style: TextStyle(
-                                color: context.appTextMuted,
-                                fontSize: 10,
-                                fontWeight: isToday
-                                    ? FontWeight.w800
-                                    : FontWeight.w400,
+                              const SizedBox(height: 6),
+                              Text(
+                                d.day,
+                                style: TextStyle(
+                                  color: context.appTextMuted,
+                                  fontSize: 10,
+                                  fontWeight: isToday
+                                      ? FontWeight.w800
+                                      : FontWeight.w400,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kalori terbakar per hari (kal)',
+                  style: TextStyle(
+                    color: context.appTextMuted,
+                    fontSize: 10,
                   ),
                 ),
               ],
@@ -341,7 +377,8 @@ class TabDashboard extends StatelessWidget {
                 AppColors.accent.withValues(alpha: 0.08),
               ],
             ),
-            border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+            border:
+                Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
             child: Row(
               children: [
                 Container(
@@ -572,7 +609,8 @@ class _PlanRow extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '✓',
-                    style: TextStyle(color: context.appTextMuted, fontSize: 12),
+                    style:
+                        TextStyle(color: context.appTextMuted, fontSize: 12),
                   ),
                 ),
               ),

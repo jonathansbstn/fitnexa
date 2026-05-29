@@ -5,6 +5,7 @@ import '../theme/app_colors_ext.dart';
 import '../providers/app_provider.dart';
 import '../models/exercise_model.dart';
 import '../models/workout_log.dart';
+import '../services/sound_service.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/snack_helper.dart';
 
@@ -28,6 +29,7 @@ class _WorkoutLogModalState extends State<WorkoutLogModal> {
   String? _selectedExercise;
   final _repsCtrl = TextEditingController();
   final _durCtrl = TextEditingController();
+  bool _saving = false;
 
   @override
   void initState() {
@@ -46,45 +48,64 @@ class _WorkoutLogModalState extends State<WorkoutLogModal> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_selectedExercise == null ||
         _repsCtrl.text.isEmpty ||
         _durCtrl.text.isEmpty) {
+      SoundService.instance.playError();
       showSnack(context, 'Semua field wajib diisi!', isError: true);
       return;
     }
+
+    setState(() => _saving = true);
+
     final prov = context.read<AppProvider>();
     final ex = Exercise.all.firstWhere((e) => e.name == _selectedExercise);
     final today = DateTime.now();
     final dateStr =
         '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
-    if (widget.editing != null) {
-      prov.updateLog(
-        widget.editing!.copyWith(
-          exercise: _selectedExercise,
-          icon: ex.icon,
-          reps: int.tryParse(_repsCtrl.text) ?? 0,
-          duration: int.tryParse(_durCtrl.text) ?? 0,
-          calories: ex.calories,
-        ),
-      );
-      showSnack(context, 'Workout berhasil diperbarui! ✓');
-    } else {
-      prov.addLog(
-        WorkoutLog(
-          id: prov.nextId,
-          date: dateStr,
-          exercise: _selectedExercise!,
-          icon: ex.icon,
-          reps: int.tryParse(_repsCtrl.text) ?? 0,
-          duration: int.tryParse(_durCtrl.text) ?? 0,
-          calories: ex.calories,
-        ),
-      );
-      showSnack(context, 'Workout berhasil ditambahkan! 🎉');
+    try {
+      if (widget.editing != null) {
+        await prov.updateLog(
+          widget.editing!.copyWith(
+            exercise: _selectedExercise,
+            icon: ex.icon,
+            reps: int.tryParse(_repsCtrl.text) ?? 0,
+            duration: int.tryParse(_durCtrl.text) ?? 0,
+            calories: ex.calories,
+            category: ex.category,
+          ),
+        );
+        if (!mounted) return;
+        SoundService.instance.playSave();
+        showSnack(context, 'Workout berhasil diperbarui! ✓');
+      } else {
+        await prov.addLog(
+          WorkoutLog(
+            id: prov.nextId,
+            date: dateStr,
+            exercise: _selectedExercise!,
+            icon: ex.icon,
+            reps: int.tryParse(_repsCtrl.text) ?? 0,
+            duration: int.tryParse(_durCtrl.text) ?? 0,
+            calories: ex.calories,
+            category: ex.category,
+          ),
+        );
+        if (!mounted) return;
+        SoundService.instance.playSave();
+        showSnack(context, 'Workout berhasil ditambahkan! 🎉');
+      }
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      SoundService.instance.playError();
+      showSnack(context, 'Gagal menyimpan: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    Navigator.pop(context);
   }
 
   @override
@@ -188,7 +209,7 @@ class _WorkoutLogModalState extends State<WorkoutLogModal> {
                     fontSize: 14,
                   ),
                   isExpanded: true,
-                  onChanged: (v) => setState(() => _selectedExercise = v),
+                  onChanged: _saving ? null : (v) => setState(() => _selectedExercise = v),
                   items: Exercise.all
                       .map(
                         (ex) => DropdownMenuItem(
@@ -210,6 +231,7 @@ class _WorkoutLogModalState extends State<WorkoutLogModal> {
                     label: 'Repetisi',
                     hint: 'mis: 15',
                     ctrl: _repsCtrl,
+                    enabled: !_saving,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -218,16 +240,22 @@ class _WorkoutLogModalState extends State<WorkoutLogModal> {
                     label: 'Durasi (detik)',
                     hint: 'mis: 30',
                     ctrl: _durCtrl,
+                    enabled: !_saving,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
-            GradientButton(
-              label: isEdit ? 'Simpan Perubahan ✓' : 'Simpan Workout 💾',
-              onPressed: _save,
-            ),
+            // Save button
+            _saving
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                : GradientButton(
+                    label: isEdit ? 'Simpan Perubahan ✓' : 'Simpan Workout 💾',
+                    onPressed: _save,
+                  ),
           ],
         ),
       ),
@@ -238,7 +266,13 @@ class _WorkoutLogModalState extends State<WorkoutLogModal> {
 class _Field extends StatelessWidget {
   final String label, hint;
   final TextEditingController ctrl;
-  const _Field({required this.label, required this.hint, required this.ctrl});
+  final bool enabled;
+  const _Field({
+    required this.label,
+    required this.hint,
+    required this.ctrl,
+    this.enabled = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +291,7 @@ class _Field extends StatelessWidget {
         TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
+          enabled: enabled,
           style: TextStyle(
             color: context.appTextPrimary,
             fontSize: 14,

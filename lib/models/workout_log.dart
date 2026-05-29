@@ -8,6 +8,10 @@ class WorkoutLog {
   final int reps;
   final int duration;
   final int calories;
+  // Firestore document ID (null untuk data lama/seed)
+  final String? firestoreId;
+  // Kategori exercise
+  final String category;
 
   const WorkoutLog({
     required this.id,
@@ -17,6 +21,8 @@ class WorkoutLog {
     required this.reps,
     required this.duration,
     required this.calories,
+    this.firestoreId,
+    this.category = '',
   });
 
   WorkoutLog copyWith({
@@ -27,104 +33,61 @@ class WorkoutLog {
     int? reps,
     int? duration,
     int? calories,
-  }) => WorkoutLog(
-    id: id ?? this.id,
-    date: date ?? this.date,
-    exercise: exercise ?? this.exercise,
-    icon: icon ?? this.icon,
-    reps: reps ?? this.reps,
-    duration: duration ?? this.duration,
-    calories: calories ?? this.calories,
-  );
+    String? firestoreId,
+    String? category,
+  }) =>
+      WorkoutLog(
+        id: id ?? this.id,
+        date: date ?? this.date,
+        exercise: exercise ?? this.exercise,
+        icon: icon ?? this.icon,
+        reps: reps ?? this.reps,
+        duration: duration ?? this.duration,
+        calories: calories ?? this.calories,
+        firestoreId: firestoreId ?? this.firestoreId,
+        category: category ?? this.category,
+      );
 
   Map<String, dynamic> toMap() => {
-    'id': id,
-    'date': date,
-    'exercise': exercise,
-    'icon': icon,
-    'reps': reps,
-    'duration': duration,
-    'calories': calories,
-  };
+        'id': id,
+        'date': date,
+        'exercise': exercise,
+        'icon': icon,
+        'reps': reps,
+        'duration': duration,
+        'calories': calories,
+        'category': category,
+      };
 
-  factory WorkoutLog.fromMap(Map<String, dynamic> m) => WorkoutLog(
-    id: m['id'] as int,
-    date: m['date'] as String,
-    exercise: m['exercise'] as String,
-    icon: m['icon'] as String? ?? '🏋️',
-    reps: m['reps'] as int,
-    duration: m['duration'] as int,
-    calories: m['calories'] as int,
-  );
+  // Untuk Firestore: tidak menyimpan firestoreId di dalam dokumen
+  Map<String, dynamic> toFirestore() => {
+        'id': id,
+        'date': date,
+        'exercise': exercise,
+        'icon': icon,
+        'reps': reps,
+        'duration': duration,
+        'calories': calories,
+        'category': category,
+        'createdAt': date,
+        'updatedAt': date,
+      };
+
+  factory WorkoutLog.fromMap(Map<String, dynamic> m, {String? firestoreId}) =>
+      WorkoutLog(
+        id: (m['id'] as num?)?.toInt() ?? 0,
+        date: m['date'] as String? ?? '',
+        exercise: m['exercise'] as String? ?? '',
+        icon: m['icon'] as String? ?? '🏋️',
+        reps: (m['reps'] as num?)?.toInt() ?? 0,
+        duration: (m['duration'] as num?)?.toInt() ?? 0,
+        calories: (m['calories'] as num?)?.toInt() ?? 0,
+        firestoreId: firestoreId,
+        category: m['category'] as String? ?? '',
+      );
 
   String toJson() => jsonEncode(toMap());
   factory WorkoutLog.fromJson(String src) =>
       WorkoutLog.fromMap(jsonDecode(src) as Map<String, dynamic>);
 
-  // ── Seed data (mirrors INITIAL_LOGS from JSX) ────────────────────────
-  static final List<WorkoutLog> seedData = [
-    const WorkoutLog(
-      id: 1,
-      date: '2026-05-12',
-      exercise: 'Push Up',
-      icon: '💪',
-      reps: 15,
-      duration: 30,
-      calories: 8,
-    ),
-    const WorkoutLog(
-      id: 2,
-      date: '2026-05-12',
-      exercise: 'Squat',
-      icon: '🦵',
-      reps: 20,
-      duration: 45,
-      calories: 10,
-    ),
-    const WorkoutLog(
-      id: 3,
-      date: '2026-05-11',
-      exercise: 'Plank',
-      icon: '🏋️',
-      reps: 1,
-      duration: 60,
-      calories: 5,
-    ),
-    const WorkoutLog(
-      id: 4,
-      date: '2026-05-11',
-      exercise: 'Jumping Jack',
-      icon: '⚡',
-      reps: 20,
-      duration: 30,
-      calories: 12,
-    ),
-    const WorkoutLog(
-      id: 5,
-      date: '2026-05-10',
-      exercise: 'Mountain Climber',
-      icon: '🏃',
-      reps: 20,
-      duration: 30,
-      calories: 15,
-    ),
-    const WorkoutLog(
-      id: 6,
-      date: '2026-05-10',
-      exercise: 'Burpee',
-      icon: '🔥',
-      reps: 10,
-      duration: 30,
-      calories: 18,
-    ),
-    const WorkoutLog(
-      id: 7,
-      date: '2026-05-09',
-      exercise: 'Sit Up',
-      icon: '🎯',
-      reps: 20,
-      duration: 30,
-      calories: 7,
-    ),
-  ];
 }

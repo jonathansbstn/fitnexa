@@ -5,6 +5,7 @@ import '../theme/app_colors_ext.dart';
 import '../providers/app_provider.dart';
 import 'auth_screen.dart';
 import 'main_screen.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,17 +46,23 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
     _ctrl.forward();
-
     Future.delayed(const Duration(milliseconds: 2600), _navigate);
   }
 
   void _navigate() {
     if (!mounted) return;
-    final auth = context.read<AppProvider>();
+    final prov = context.read<AppProvider>();
+    Widget dest;
+    if (prov.isLoggedIn) {
+      dest = const MainScreen();
+    } else if (prov.hasSeenOnboarding) {
+      dest = const AuthScreen();
+    } else {
+      dest = const OnboardingScreen();
+    }
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) =>
-            auth.isLoggedIn ? const MainScreen() : const AuthScreen(),
+        pageBuilder: (_, __, ___) => dest,
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 400),
@@ -105,8 +112,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ],
                         ),
                         child: const Center(
-                          child:
-                              Text('⚡', style: TextStyle(fontSize: 52)),
+                          child: Text('⚡', style: TextStyle(fontSize: 52)),
                         ),
                       ),
                       const SizedBox(height: 20),

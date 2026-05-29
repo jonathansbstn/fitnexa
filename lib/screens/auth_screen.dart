@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_colors_ext.dart';
 import '../providers/app_provider.dart';
+import '../services/sound_service.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/snack_helper.dart';
 import 'main_screen.dart';
@@ -50,6 +51,7 @@ class _AuthScreenState extends State<AuthScreen>
     final password = _passwordCtrl.text.trim();
     final name = _nameCtrl.text.trim();
 
+    // Validasi lokal
     if (email.isEmpty || password.isEmpty) {
       setState(() => _error = 'Email & password wajib diisi');
       return;
@@ -71,21 +73,35 @@ class _AuthScreenState extends State<AuthScreen>
       _loading = true;
       _error = '';
     });
-    await Future.delayed(const Duration(milliseconds: 600));
 
-    if (!mounted) return;
-    final displayName = _isRegister ? name : 'Jonathan Sebastian';
-    await context.read<AppProvider>().login(displayName, email);
-    if (!mounted) return;
-    showSnack(context, 'Selamat datang, $displayName! 👋');
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const MainScreen(),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-    );
+    final prov = context.read<AppProvider>();
+    try {
+      if (_isRegister) {
+        await prov.registerWithEmailPassword(name, email, password);
+      } else {
+        await prov.loginWithEmailPassword(email, password);
+      }
+
+      if (!mounted) return;
+      SoundService.instance.playLoginSuccess();
+      final displayName = prov.userName;
+      showSnack(context, 'Selamat datang, $displayName! 👋');
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const MainScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SoundService.instance.playError();
+      final msg = prov.errorMessage ?? 'Terjadi kesalahan. Coba lagi.';
+      setState(() => _error = msg);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _toggleMode() {
@@ -270,17 +286,6 @@ class _AuthScreenState extends State<AuthScreen>
                             ),
                             GestureDetector(
                               onTap: _toggleMode,
-                              child: const Text(
-                                '',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: _toggleMode,
                               child: Text(
                                 _isRegister ? 'Masuk' : 'Daftar',
                                 style: const TextStyle(
@@ -292,18 +297,6 @@ class _AuthScreenState extends State<AuthScreen>
                             ),
                           ],
                         ),
-                        if (!_isRegister) ...[
-                          const SizedBox(height: 8),
-                          Center(
-                            child: Text(
-                              'Demo: isi email & password bebas',
-                              style: TextStyle(
-                                color: context.appTextMuted,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
