@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_colors_ext.dart';
@@ -108,28 +109,59 @@ class TabDashboard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Avatar
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      prov.userInitials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
+                // Lottie fire animation + avatar
+                Column(
+                  children: [
+                    SizedBox(
+                      width: 70,
+                      height: 70,
+                      child: Lottie.asset(
+                        'assets/lottie/fire.json',
+                        fit: BoxFit.contain,
+                        repeat: true,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    // Avatar circle with photo or initials
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          width: 2,
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: prov.photoUrl != null
+                          ? Image.network(
+                              prov.photoUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Center(
+                                child: Text(
+                                  prov.userInitials,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                prov.userInitials,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
               ],
             ),

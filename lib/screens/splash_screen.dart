@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_colors_ext.dart';
 import '../providers/app_provider.dart';
+import 'package:lottie/lottie.dart';
 import 'auth_screen.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
+import 'profile_setup_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _ctrl;
   late Animation<double> _scale;
   late Animation<double> _fade;
-  late Animation<double> _progress;
 
   @override
   void initState() {
@@ -39,12 +40,6 @@ class _SplashScreenState extends State<SplashScreen>
         curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
       ),
     );
-    _progress = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeInOut),
-      ),
-    );
     _ctrl.forward();
     Future.delayed(const Duration(milliseconds: 2600), _navigate);
   }
@@ -54,7 +49,11 @@ class _SplashScreenState extends State<SplashScreen>
     final prov = context.read<AppProvider>();
     Widget dest;
     if (prov.isLoggedIn) {
-      dest = const MainScreen();
+      if (!prov.hasCompletedProfile) {
+        dest = const ProfileSetupScreen();
+      } else {
+        dest = const MainScreen();
+      }
     } else if (prov.hasSeenOnboarding) {
       dest = const AuthScreen();
     } else {
@@ -62,8 +61,8 @@ class _SplashScreenState extends State<SplashScreen>
     }
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => dest,
-        transitionsBuilder: (_, anim, __, child) =>
+        pageBuilder: (_, _, _) => dest,
+        transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 400),
       ),
@@ -83,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: AnimatedBuilder(
           animation: _ctrl,
-          builder: (_, __) => Column(
+          builder: (_, _) => Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               FadeTransition(
@@ -138,27 +137,14 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 64),
-              // Progress bar
-              Container(
-                width: 180,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: context.appCardLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: _progress.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.accent],
-                      ),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
+              const SizedBox(height: 24),
+              // Lottie loading animation
+              Lottie.asset(
+                'assets/lottie/loading.json',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                repeat: true,
               ),
             ],
           ),

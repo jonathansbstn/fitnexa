@@ -7,6 +7,7 @@ import '../services/sound_service.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/snack_helper.dart';
 import 'main_screen.dart';
+import 'profile_setup_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -86,10 +87,21 @@ class _AuthScreenState extends State<AuthScreen>
       SoundService.instance.playLoginSuccess();
       final displayName = prov.userName;
       showSnack(context, 'Selamat datang, $displayName! 👋');
+
+      // Register → ProfileSetup, Login → MainScreen (or ProfileSetup if profile not done)
+      final Widget destination;
+      if (_isRegister) {
+        destination = const ProfileSetupScreen();
+      } else if (!prov.hasCompletedProfile) {
+        destination = const ProfileSetupScreen();
+      } else {
+        destination = const MainScreen();
+      }
+
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const MainScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
+          pageBuilder: (_, _, _) => destination,
+          transitionsBuilder: (_, anim, _, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 400),
         ),
@@ -111,6 +123,40 @@ class _AuthScreenState extends State<AuthScreen>
     });
     _fadeCtrl.reset();
     _fadeCtrl.forward();
+  }
+
+  Future<void> _submitGoogle() async {
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
+    final prov = context.read<AppProvider>();
+    try {
+      await prov.loginWithGoogle();
+      if (!mounted) return;
+      SoundService.instance.playLoginSuccess();
+      showSnack(context, 'Selamat datang, ${prov.userName}! 👋');
+
+      final Widget destination = prov.hasCompletedProfile
+          ? const MainScreen()
+          : const ProfileSetupScreen();
+
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, _, _) => destination,
+          transitionsBuilder: (_, anim, _, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SoundService.instance.playError();
+      final msg = prov.errorMessage ?? e.toString();
+      setState(() => _error = msg);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -298,6 +344,85 @@ class _AuthScreenState extends State<AuthScreen>
                           ],
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ── Separator ──────────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: context.appDivider,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'atau',
+                          style: TextStyle(
+                            color: context.appTextMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: context.appDivider,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── Google Sign-In Button ──────────────────────────────
+                  GestureDetector(
+                    onTap: _loading ? null : _submitGoogle,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: context.appCard,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.appDivider, width: 1.5),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Google G logo
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'G',
+                                style: TextStyle(
+                                  color: Color(0xFF4285F4),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Lanjut dengan Google',
+                            style: TextStyle(
+                              color: context.appTextPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "191106536176",
+    "project_id": "fitnexa-app",
+    "storage_bucket": "fitnexa-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191106536176:android:9e172e2a8ee94b4d18a835",
+        "android_client_info": {
+          "package_name": "com.example.uasfitnexa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRWqCnWKTc-rRouJV9V1hobbVX_6OCWrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

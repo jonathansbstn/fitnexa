@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'auth_screen.dart';
@@ -15,7 +16,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _slides = [
     _Slide(
-      emoji: '🏋️',
+      imageAsset: 'assets/images/ob_workout.png',
       title: 'Lacak Workout\nKamu',
       subtitle:
           'Catat setiap gerakan — Push Up, Squat, Plank — dan pantau kalori yang terbakar setiap hari.',
@@ -23,7 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       gradientEnd: Color(0xFF4ECDC4),
     ),
     _Slide(
-      emoji: '📊',
+      imageAsset: 'assets/images/ob_progress.png',
       title: 'Lihat Progress\nNyata',
       subtitle:
           'Grafik mingguan, streak harian, dan riwayat workout tersimpan rapi sehingga kamu selalu termotivasi.',
@@ -31,7 +32,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       gradientEnd: Color(0xFFFF4757),
     ),
     _Slide(
-      emoji: '🤖',
+      imageAsset: 'assets/images/ob_ai.png',
       title: 'AI Personal\nTrainer',
       subtitle:
           'Rekomendasi rencana latihan yang dipersonalisasi berdasarkan tujuan, level, dan waktu yang kamu punya.',
@@ -56,8 +57,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const AuthScreen(),
-        transitionsBuilder: (_, anim, __, child) =>
+        pageBuilder: (_, _, _) => const AuthScreen(),
+        transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 400),
       ),
@@ -209,15 +210,15 @@ class _SlideView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Big emoji in glassmorphism circle
+          // Lottie animation in glassmorphism circle
           Container(
-            width: 160,
-            height: 160,
+            width: 200,
+            height: 200,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: Colors.white.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              border:
-                  Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25), width: 2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.15),
@@ -226,10 +227,21 @@ class _SlideView extends StatelessWidget {
                 ),
               ],
             ),
-            child: Center(
-              child: Text(
-                slide.emoji,
-                style: const TextStyle(fontSize: 72),
+            child: ClipOval(
+              child: TweenAnimationBuilder(
+                tween: Tween<double>(begin: 0.95, end: 1.05),
+                duration: const Duration(seconds: 2),
+                curve: Curves.easeInOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: child,
+                  );
+                },
+                child: Image.asset(
+                  slide.imageAsset,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -261,10 +273,10 @@ class _SlideView extends StatelessWidget {
 }
 
 class _Slide {
-  final String emoji, title, subtitle;
+  final String imageAsset, title, subtitle;
   final Color gradientStart, gradientEnd;
   const _Slide({
-    required this.emoji,
+    required this.imageAsset,
     required this.title,
     required this.subtitle,
     required this.gradientStart,
