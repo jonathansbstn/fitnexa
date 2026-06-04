@@ -57,7 +57,7 @@ class AppTheme {
           outlineVariant: Color(0x0DFFFFFF),
         ),
         textTheme:
-            GoogleFonts.nunitoTextTheme(ThemeData.dark().textTheme).apply(
+            GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme).apply(
           bodyColor: const Color(0xFFF0F0F0),
           displayColor: const Color(0xFFF0F0F0),
         ),
@@ -84,7 +84,7 @@ class AppTheme {
           outlineVariant: Color(0x14000000),
         ),
         textTheme:
-            GoogleFonts.nunitoTextTheme(ThemeData.light().textTheme).apply(
+            GoogleFonts.plusJakartaSansTextTheme(ThemeData.light().textTheme).apply(
           bodyColor: const Color(0xFF1A1A2E),
           displayColor: const Color(0xFF1A1A2E),
         ),

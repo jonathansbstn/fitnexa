@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'bouncing_widget.dart';
 
 class GradientButton extends StatelessWidget {
   final String label;
@@ -21,7 +22,7 @@ class GradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return BouncingWidget(
       onTap: onPressed,
       child: Container(
         width: double.infinity,
@@ -38,7 +39,7 @@ class GradientButton extends StatelessWidget {
           boxShadow: onPressed != null
               ? [
                   BoxShadow(
-                    color: colors.first.withOpacity(0.38),
+                    color: colors.first.withValues(alpha: 0.38),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),

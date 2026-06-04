@@ -1,3 +1,5 @@
+import 'package:fl_chart/fl_chart.dart';
+import '../widgets/tilt_card.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
@@ -26,13 +28,15 @@ class TabDashboard extends StatelessWidget {
     final maxCal = weekly.map((w) => w.calories).fold(0, (a, b) => a > b ? a : b);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Hero Greeting ────────────────────────────────────────────
-          Container(
-            width: double.infinity,
+          TiltCard(
+            depth: 25,
+            child: Container(
+              width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -166,6 +170,7 @@ class TabDashboard extends StatelessWidget {
               ],
             ),
           ),
+          ),
           const SizedBox(height: 20),
 
           // ── Streak + Stats Row ───────────────────────────────────────
@@ -203,6 +208,7 @@ class TabDashboard extends StatelessWidget {
 
           // ── Weekly Chart (data dari logs asli) ───────────────────────
           AppCard(
+            blur: 15,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -253,73 +259,78 @@ class TabDashboard extends StatelessWidget {
                   )
                 else
                   SizedBox(
-                    height: 104,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: weekly.asMap().entries.map((entry) {
-                        final i = entry.key;
-                        final d = entry.value;
-                        final h = maxCal > 0
-                            ? (d.calories / maxCal * 56).clamp(4.0, 56.0)
-                            : 4.0;
-                        // Hari ini = index 6 (paling kanan)
-                        final isToday = i == 6;
-                        return Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              if (d.calories > 0)
-                                Text(
-                                  '${d.calories}',
-                                  style: TextStyle(
-                                    color: isToday
-                                        ? AppColors.primary
-                                        : context.appTextMuted,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 600),
-                                curve: Curves.easeOut,
-                                height: h,
-                                margin: const EdgeInsets.symmetric(
-                                    horizontal: 3),
-                                decoration: BoxDecoration(
-                                  gradient: isToday
-                                      ? const LinearGradient(
-                                          colors: [
-                                            AppColors.primary,
-                                            AppColors.warning,
-                                          ],
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.topCenter,
-                                        )
-                                      : null,
-                                  color: isToday
-                                      ? null
-                                      : AppColors.primary
-                                          .withValues(alpha: 0.3),
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(5),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                d.day,
-                                style: TextStyle(
-                                  color: context.appTextMuted,
-                                  fontSize: 10,
-                                  fontWeight: isToday
-                                      ? FontWeight.w800
-                                      : FontWeight.w400,
-                                ),
-                              ),
-                            ],
+                    height: 120,
+                    child: LineChart(
+                      LineChartData(
+                        gridData: const FlGridData(show: false),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                if (value.toInt() >= 0 && value.toInt() < weekly.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      weekly[value.toInt()].day,
+                                      style: TextStyle(
+                                        color: value.toInt() == 6 ? AppColors.primary : context.appTextMuted,
+                                        fontSize: 10,
+                                        fontWeight: value.toInt() == 6 ? FontWeight.w800 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const Text('');
+                              },
+                              reservedSize: 22,
+                            ),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        minX: 0,
+                        maxX: 6,
+                        minY: 0,
+                        maxY: maxCal > 0 ? (maxCal * 1.2).toDouble() : 100,
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: weekly.asMap().entries.map((e) {
+                              return FlSpot(e.key.toDouble(), e.value.calories.toDouble());
+                            }).toList(),
+                            isCurved: true,
+                            curveSmoothness: 0.35,
+                            color: AppColors.primary,
+                            barWidth: 3,
+                            isStrokeCapRound: true,
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) {
+                                return FlDotCirclePainter(
+                                  radius: index == 6 ? 5 : 3,
+                                  color: AppColors.primary,
+                                  strokeWidth: 2,
+                                  strokeColor: context.appBg,
+                                );
+                              },
+                            ),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary.withValues(alpha: 0.3),
+                                  AppColors.primary.withValues(alpha: 0.0),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 const SizedBox(height: 4),
@@ -337,6 +348,7 @@ class TabDashboard extends StatelessWidget {
 
           // ── Today's Plan ─────────────────────────────────────────────
           AppCard(
+            blur: 15,
             child: Column(
               children: [
                 Row(
@@ -403,6 +415,7 @@ class TabDashboard extends StatelessWidget {
 
           // ── Tips Card ────────────────────────────────────────────────
           AppCard(
+            blur: 15,
             gradient: LinearGradient(
               colors: [
                 AppColors.purple.withValues(alpha: 0.18),
@@ -456,6 +469,7 @@ class TabDashboard extends StatelessWidget {
 
           // ── SDGs Banner ──────────────────────────────────────────────
           AppCard(
+            blur: 15,
             gradient: LinearGradient(
               colors: [
                 const Color(0xFF00543C).withValues(alpha: 0.22),
@@ -548,6 +562,8 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      blur: 10,
+      glowColor: color.withValues(alpha: 0.15),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

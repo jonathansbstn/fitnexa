@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_colors_ext.dart';
 import '../providers/app_provider.dart';
@@ -188,7 +189,7 @@ class _TabHistoryState extends State<TabHistory> {
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -384,14 +385,54 @@ class _TabHistoryState extends State<TabHistory> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Loading ───────────────────────────────────────────────
+                // ── Loading Shimmer ──────────────────────────────────────────
                 if (prov.isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(
-                          color: AppColors.primary),
-                    ),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: 4,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Shimmer.fromColors(
+                          baseColor: context.appCard.withValues(alpha: 0.5),
+                          highlightColor: context.appCardLight.withValues(alpha: 0.5),
+                          child: AppCard(
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: double.infinity,
+                                        height: 16,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        width: 100,
+                                        height: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   )
 
                 // ── Empty State ───────────────────────────────────────────
@@ -708,7 +749,7 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    return AppCard( blur: 15,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

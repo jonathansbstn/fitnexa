@@ -348,7 +348,7 @@ class TabProfile extends StatelessWidget {
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
       child: Column(
         children: [
           // â”€â”€ Avatar + Edit name + Upload photo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -539,7 +539,7 @@ class TabProfile extends StatelessWidget {
           const SizedBox(height: 14),
 
           // â”€â”€ Kalori Hari Ini vs Target â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          AppCard(
+          AppCard( blur: 15,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -673,7 +673,7 @@ class TabProfile extends StatelessWidget {
           const SizedBox(height: 14),
 
           // â”€â”€ Streak Calendar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          AppCard(
+          AppCard( blur: 15,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -693,7 +693,7 @@ class TabProfile extends StatelessWidget {
           const SizedBox(height: 14),
 
           // â”€â”€ Achievements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          AppCard(
+          AppCard( blur: 15,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -763,7 +763,7 @@ class TabProfile extends StatelessWidget {
           const SizedBox(height: 14),
 
           // â”€â”€ SDGs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          AppCard(
+          AppCard( blur: 15,
             gradient: LinearGradient(
               colors: [
                 const Color(0xFF00543C).withValues(alpha: 0.25),
@@ -822,7 +822,7 @@ class TabProfile extends StatelessWidget {
 
           // â”€â”€ Profile Info Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (prov.hasCompletedProfile) ...[
-            AppCard(
+            AppCard( blur: 15,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -982,7 +982,7 @@ class TabProfile extends StatelessWidget {
                   ),
                 );
               },
-              child: AppCard(
+              child: AppCard( blur: 15,
                 gradient: LinearGradient(
                   colors: [
                     AppColors.primary.withValues(alpha: 0.15),
@@ -1031,7 +1031,7 @@ class TabProfile extends StatelessWidget {
           const SizedBox(height: 14),
 
           // â”€â”€ Menu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          AppCard(
+          AppCard( blur: 15,
             padding: EdgeInsets.zero,
             child: Column(
               children: (() {
@@ -1232,7 +1232,7 @@ class _ProfileStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    return AppCard( blur: 15,
       padding: const EdgeInsets.all(14),
       child: Column(
         children: [

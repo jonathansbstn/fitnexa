@@ -1,3 +1,4 @@
+import 'dart:ui' as dart_ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/sound_service.dart';
@@ -7,8 +8,12 @@ import '../widgets/snack_helper.dart';
 import 'tab_dashboard.dart';
 import 'tab_workout.dart';
 import 'tab_ai.dart';
+import 'package:confetti/confetti.dart';
+import 'package:provider/provider.dart';
 import 'tab_history.dart';
 import 'tab_profile.dart';
+import '../widgets/animated_background.dart';
+import '../providers/app_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -22,6 +27,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   // Animasi fade saat ganti tab
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
+  late ConfettiController _confettiController;
 
   static const _tabs = [
     _TabItem(icon: '🏠', label: 'Home'),
@@ -39,11 +45,13 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 220),
     );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
     _fadeCtrl.forward();
   }
 
   @override
   void dispose() {
+    _confettiController.dispose();
     _fadeCtrl.dispose();
     super.dispose();
   }
@@ -68,9 +76,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     ];
 
     return Scaffold(
-      backgroundColor: context.appBg,
+      extendBody: true,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: context.appBg,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         titleSpacing: 20,
         title: const Text(
@@ -96,21 +105,74 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           const SizedBox(width: 8),
         ],
       ),
-
-      // Body dengan FadeTransition saat ganti tab
-      body: FadeTransition(
-        opacity: _fadeAnim,
-        child: IndexedStack(
-          index: _currentIndex,
-          children: screens,
-        ),
+      // Body dengan FadeTransition + ScaleTransition saat ganti tab
+      body: Stack(
+        children: [
+          AnimatedBackground(
+            child: FadeTransition(
+              opacity: _fadeAnim,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.98, end: 1.0).animate(_fadeAnim),
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: screens,
+                ),
+              ),
+            ),
+          ),
+          Consumer<AppProvider>(
+            builder: (context, prov, _) {
+              if (prov.showConfetti) {
+                _confettiController.play();
+              }
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false,
+                  colors: const [
+                    Colors.green,
+                    Colors.blue,
+                    Colors.pink,
+                    Colors.orange,
+                    Colors.purple
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
 
-      // Bottom Nav Bar dengan sliding indicator
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        tabs: _tabs,
-        onTap: navigateToTab,
+      // Floating Glass Bottom Nav Bar
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: dart_ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              decoration: BoxDecoration(
+                color: context.appCard.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: _BottomNav(
+                currentIndex: _currentIndex,
+                tabs: _tabs,
+                onTap: navigateToTab,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

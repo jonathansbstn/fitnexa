@@ -99,6 +99,18 @@ class AppProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  // Confetti State
+  bool _showConfetti = false;
+  bool get showConfetti => _showConfetti;
+  void playConfetti() {
+    _showConfetti = true;
+    notifyListeners();
+    Future.delayed(const Duration(seconds: 4), () {
+      _showConfetti = false;
+      notifyListeners();
+    });
+  }
+
   // Theme
   bool _isDarkMode = true;
   bool get isDarkMode => _isDarkMode;
@@ -450,6 +462,7 @@ class AppProvider extends ChangeNotifier {
     }
     _logs = [log, ..._logs];
     await _saveLogs();
+    playConfetti(); // Trigger ledakan confetti!
     notifyListeners();
   }
 
